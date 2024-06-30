@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../model/book.dart';
+
 class MyBookTitle extends StatelessWidget {
+  final List<Book> books;
   final String? name;
-  final List? books;
   final double? height;
   final double? width;
-  const MyBookTitle({super.key, this.books, this.height, this.width, this.name});
+  const MyBookTitle({super.key,required this.books, this.height, this.width, this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,7 @@ class MyBookTitle extends StatelessWidget {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: List.generate(books?.length ?? 0, (index){
+              children: List.generate(books.length, (index){
                 return Padding(
                   padding: EdgeInsets.only(right: 15.w),
                   child: Column(
@@ -41,7 +43,7 @@ class MyBookTitle extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12.r),
                                 image: DecorationImage(
                                   image: CachedNetworkImageProvider(
-                                      books?[index]['cover'],
+                                      books[index].cover ?? '',
                                       headers: {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"}
                                   ),
                                   fit: BoxFit.cover,
@@ -49,7 +51,8 @@ class MyBookTitle extends StatelessWidget {
                             ),
                           ),
 
-                          Positioned(
+
+                          books[index].tag == '' ? const SizedBox() : Positioned(
                               bottom: height == null ? 20 : height! / 20,
                               child:
                               Container(
@@ -64,11 +67,10 @@ class MyBookTitle extends StatelessWidget {
                                     )
                                 ),
                                 child: Center(
-                                  child: Text( maxLines: 1, books?[index]['tag'], style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
+                                  child: Text( maxLines: 1, books[index].tag ?? '', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),),
                                 ),
                               )
                           )
-
                         ],
                       ),
 
@@ -78,7 +80,7 @@ class MyBookTitle extends StatelessWidget {
                         width: 120.w,
                         child: Text(
                           maxLines: 1,
-                          books?[index]['title'], style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),),
+                          books[index].bookName ?? '', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),),
                       ),
                       //副标题
                       Container(
@@ -86,7 +88,7 @@ class MyBookTitle extends StatelessWidget {
                         width: 120.w,
                         child: Text(
                           maxLines: 1,
-                          books?[index]['author'], style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.inversePrimary),),
+                          books[index].author ?? '', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.inversePrimary),),
                       )
                     ],
                   ),

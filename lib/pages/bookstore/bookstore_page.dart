@@ -6,89 +6,91 @@ import 'package:line_icons/line_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mikuinfo/pages/components/my_book_title.dart';
 import 'package:mikuinfo/pages/components/my_search_title.dart';
+import 'package:provider/provider.dart';
 
-class BookstorePage extends StatefulWidget{
+import '../../model/book.dart';
+import '../home/home_vm.dart';
+
+class BookstorePage extends StatefulWidget {
   const BookstorePage({super.key});
 
   @override
-  State<StatefulWidget> createState(){
+  State<StatefulWidget> createState() {
     return _BookstoreState();
   }
 }
 
-class _BookstoreState extends State<BookstorePage>{
-  List <Map<String, dynamic>> books = [
-    {
-      "title": "联谊去凑人数的我，把不知为何没人追的前人气偶像国宝级美少女带回家了。",
-      "author": "星野星野",
-      "tag": "校园 青春 恋爱 欢乐向",
-      "cover": "https://img.wenku8.com/image/3/3683/3683s.jpg"
-    },
-    {
-      "title": "即使我喜欢你，你也依然是我的粉丝吗？",
-      "author": "恵比须清司",
-      "tag": "校园 青春 欢乐向 后宫 青梅竹马 妹妹",
-      "cover": "https://img.wenku8.com/image/3/3682/3682s.jpg"
-    },
-    {
-      "title": "葬送的芙莉莲～前奏～",
-      "author": "八目迷",
-      "tag": "奇幻 冒险 战斗 魔法",
-      "cover": "https://img.wenku8.com/image/3/3656/3656s.jpg"
-    },
-  ];
+class _BookstoreState extends State<BookstorePage> {
+  final HomeViewModel _viewModel = HomeViewModel();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _viewModel.getHomePageData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      body: getBodyUI(context, books),
+      body: _getBodyUI(),
     );
   }
-}
 
-Widget getBodyUI(BuildContext context,List <Map<String, dynamic>> books) {
-  return SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(15.r),
-        child: Column(
-          children: [
-            10.verticalSpace,
-            //搜索框
+  Widget _getBodyUI() {
+    return ChangeNotifierProvider.value(
+        value: _viewModel,
+        builder: (context, child) {
+          return SafeArea(
+              child: SingleChildScrollView(
+            padding: EdgeInsets.all(15.r),
+            child: Column(
+              children: [
+                10.verticalSpace,
+                //搜索框
 
-            MySearchTitle(
-              bookshelfTap: () {},
+                MySearchTitle(
+                  bookshelfTap: () {},
+                ),
+
+                30.verticalSpace,
+
+                //本期推荐
+                Selector<HomeViewModel, List<Book>?>(
+                    builder: (context, List<Book>? preferbooks, child) {
+                      if (preferbooks == null) {
+                        return const SizedBox();
+                      }
+                      return MyBookTitle(
+                        name: '本期强推',
+                        books: preferbooks,
+                        width: 120.w,
+                        height: 160.h,
+                      );
+                    },
+                    selector: (_, viewModel) => viewModel.preferbooks),
+
+                30.verticalSpace,
+
+                //新书抢先
+                Selector<HomeViewModel, List<Book>?>(
+                    builder: (context, List<Book>? books, child) {
+                      if (books == null) {
+                        return const SizedBox();
+                      }
+                      return MyBookTitle(
+                        name: '新书抢先',
+                        books: books,
+                        width: 120.w,
+                        height: 160.h,
+                      );
+                    },
+                    selector: (_, viewModel) => viewModel.books),
+                //特别为您准备
+              ],
             ),
-
-            30.verticalSpace,
-
-            //轻小说推荐
-            MyBookTitle(
-              name: '近期轻小说',
-              books: books,
-              width: 120.w,
-              height: 160.h,
-            ),
-
-            30.verticalSpace,
-
-            MyBookTitle(
-              name: '新番原作',
-              books: books,
-              width: 120.w,
-              height: 160.h,
-            ),
-
-            30.verticalSpace,
-
-            MyBookTitle(
-              name: '最近阅读',
-              books: books,
-              width: 120.w,
-              height: 160.h,
-            ),
-            //特别为您准备
-          ],
-        ),
-      )
-  );
+          ));
+        });
+  }
 }
