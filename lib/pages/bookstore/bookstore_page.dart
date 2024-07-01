@@ -9,6 +9,7 @@ import 'package:mikuinfo/pages/components/my_search_title.dart';
 import 'package:provider/provider.dart';
 
 import '../../model/book.dart';
+import '../components/my_book_skeleton.dart';
 import '../home/home_vm.dart';
 
 class BookstorePage extends StatefulWidget {
@@ -60,7 +61,7 @@ class _BookstoreState extends State<BookstorePage> {
                 Selector<HomeViewModel, List<Book>?>(
                     builder: (context, List<Book>? preferbooks, child) {
                       if (preferbooks == null) {
-                        return const SizedBox();
+                        return const MyBookSkeleton();
                       }
                       return MyBookTitle(
                         name: '本期强推',
@@ -77,7 +78,7 @@ class _BookstoreState extends State<BookstorePage> {
                 Selector<HomeViewModel, List<Book>?>(
                     builder: (context, List<Book>? books, child) {
                       if (books == null) {
-                        return const SizedBox();
+                        return const MyBookSkeleton();
                       }
                       return MyBookTitle(
                         name: '新书抢先',

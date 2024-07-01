@@ -5,8 +5,11 @@ import 'package:mikuinfo/model/book.dart';
 import 'package:mikuinfo/pages/components/my_book_title.dart';
 import 'package:mikuinfo/pages/components/my_search_title.dart';
 import 'package:mikuinfo/pages/home/home_vm.dart';
-import 'package:mikuinfo/pages/home/my_book_activity.dart';
+import 'package:mikuinfo/pages/components/my_book_activity.dart';
 import 'package:provider/provider.dart';
+
+import '../components/my_book_activities_skeleton.dart';
+import '../components/my_book_skeleton.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -76,7 +79,7 @@ class _HomePageState extends State<Homepage> {
               Selector<HomeViewModel, List<Activity>?>(
                   builder: (context, List<Activity>? activities, child) {
                     if (activities == null) {
-                      return const SizedBox();
+                      return const MyBookActivitiesSkeleton();
                     }
                     return MyBookActivities(activities: activities);
                   },
@@ -87,10 +90,7 @@ class _HomePageState extends State<Homepage> {
 
               //本期推荐
               Selector<HomeViewModel, List<Book>?>(
-                  builder: (context, List<Book>? preferbooks, child) {
-                    if (preferbooks == null) {
-                      return const SizedBox();
-                    }
+                  builder: (context, preferbooks, child) {
                     return MyBookTitle(
                       name: '本期强推',
                       books: preferbooks,
@@ -104,10 +104,7 @@ class _HomePageState extends State<Homepage> {
 
               //新书抢先
               Selector<HomeViewModel, List<Book>?>(
-                  builder: (context, List<Book>? books, child) {
-                    if (books == null) {
-                      return const SizedBox();
-                    }
+                  builder: (context, books, child) {
                     return MyBookTitle(
                       name: '新书抢先',
                       books: books,

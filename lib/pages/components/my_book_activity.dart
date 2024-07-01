@@ -14,7 +14,8 @@ class MyBookActivities extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          height: 150.w,
+          height: 150.h,
+          width: double.infinity,
           child: Swiper(
             itemCount: activities.length,
             autoplay: true,
@@ -22,7 +23,7 @@ class MyBookActivities extends StatelessWidget {
               return Stack(
                 children: [
                   Container(
-                    height: 150.w,
+                    height: 150.h,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12.r),
                         image: DecorationImage(image:
