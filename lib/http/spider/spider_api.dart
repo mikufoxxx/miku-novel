@@ -21,7 +21,7 @@ class SpiderApi {
     Function(List<Book> values)? booksCallback,
     Function(List<Book> values)? preferbooksCallback,
 }) async {
-    String htmlStr = await DioInstance.instance().getString(path: ApiString.biliNovelHomeUrl);
+    String htmlStr = await DioInstance.instance().getString(path: ApiString.wenKuChinaHomeUrl);
     Document doc = parse(htmlStr);
 
     ///活动数据
@@ -41,12 +41,12 @@ class SpiderApi {
 
   }
   List<Activity> parseBookActivities(Document doc){
-    List<Element> aEls = doc.querySelectorAll(".slide-container .slide-a");
+    List<Element> aEls = doc.querySelectorAll("#index_tpic_big a");
     List<Activity> activities = [];
     for (Element a in aEls) {
-      String? url = ApiString.biliNovelHomeUrl + a.attributes['href']!.trim() ?? "";
-      String? cover = ApiString.biliNovelHomeUrl + a.querySelector('.slide-img')!.attributes['src']!.trim() ?? "";
-      String? alt = a.querySelector('.slide-img')?.attributes['alt']?.trim() ?? "";
+      String? url = a.attributes['href']?.trim() ?? "";
+      String? cover = a.querySelector('img')?.attributes['src']?.trim() ?? "";
+      String? alt = a.querySelector('img')?.attributes['alt']?.trim() ?? "";
 
       activities.add(Activity(
           url: url,
@@ -58,17 +58,40 @@ class SpiderApi {
   }
 
   List<Book> parseHomeBooks(Document doc) {
-    List<Element> liEls = doc.querySelectorAll('.book-ol .book-li');
+    List<Element> bookEls = doc.querySelectorAll('.mind-book');
     List<Book> books = [];
 
-    for (Element li in liEls) {
-      String? url = ApiString.biliNovelHomeUrl + li.querySelector('.book-layout')!.attributes['href']!.trim() ?? "";
+    for (Element bookEl in bookEls) {
+      Element? linkEl = bookEl.querySelector('.imgbox a');
+      if (linkEl == null) continue;
+      
+      String? url = linkEl.attributes['href']?.trim() ?? "";
       String bid = ApiString.getId(url, ApiString.bookIdRegExp);
-      String? cover = li.querySelector('.book-cover')!.querySelector('img')?.attributes['data-src']!.trim() ?? "";
-      String? bookName = li.querySelector('.book-cover')!.querySelector('img')?.attributes['alt']!.trim() ?? "";
-      String? bauthor = li.querySelector('.book-meta .book-meta-l .book-author')?.text.trim() ?? "";
-      String? author = bauthor == '' ? '' : bauthor.substring(2);
-      String? tag = li.querySelector('.tag-small')?.text.trim() ?? "";
+      Element? imgEl = linkEl.querySelector('img');
+      String? cover = imgEl?.attributes['data-original']?.trim() ?? imgEl?.attributes['src']?.trim() ?? "";
+      String? bookName = imgEl?.attributes['alt']?.trim() ?? "";
+      
+      // 处理相对路径的图片URL
+      if (cover.isNotEmpty && !cover.startsWith('http')) {
+        if (cover.startsWith('/')) {
+          cover = 'https://www.wenkuchina.com$cover';
+        } else {
+          cover = 'https://www.wenkuchina.com/$cover';
+        }
+      }
+      
+      // 如果图片为空或包含默认占位图，使用自定义占位图
+      if (cover.isEmpty || cover.contains('book-cover-no.svg')) {
+        cover = 'https://via.placeholder.com/150x200/cccccc/666666?text=No+Image';
+      }
+      
+      // 从作者链接中提取作者信息
+      Element? authorEl = bookEl.querySelector('.author a');
+      String author = authorEl?.text.trim() ?? "";
+      
+      // 从updatenum中提取文库信息作为tag
+      Element? tagEl = bookEl.querySelector('.updatenum');
+      String tag = tagEl?.text.trim() ?? "";
 
       books.add(Book(
         url: url,
@@ -83,21 +106,35 @@ class SpiderApi {
   }
 
   List<Book> parsePreferBooks(Document doc) {
-    List<Element> liEls = doc.querySelectorAll('.module-slide-ol .module-slide-li');
+    List<Element> topEls = doc.querySelectorAll('.top-list .top-item');
     List<Book> preferbooks = [];
 
-    for (Element li in liEls) {
-      String? url = ApiString.biliNovelHomeUrl + li.querySelector('.module-slide-a')!.attributes['href']!.trim() ?? "";
+    for (Element item in topEls) {
+      Element? linkEl = item.querySelector('a');
+      if (linkEl == null) continue;
+      
+      String? url = linkEl.attributes['href']?.trim() ?? "";
       String bid = ApiString.getId(url, ApiString.bookIdRegExp);
-      String? cover = li.querySelector('.module-slide-img')!.querySelector('img')?.attributes['data-src']!.trim() ?? "";
-      String? bookName = li.querySelector('.module-slide-img')!.querySelector('img')?.attributes['alt']!.trim() ?? "";
-      String? bauthor = li.querySelector('.module-slide-author')?.text.trim() ?? "";
-      String? author = bauthor == '' ? '' : bauthor.substring(3);
+      
+      // 从链接文本中提取书名和作者
+      String linkText = linkEl.text.trim();
+      String bookName = "";
+      String author = "";
+      
+      if (linkText.contains('作者：')) {
+        List<String> parts = linkText.split('作者：');
+        if (parts.length >= 2) {
+          bookName = parts[0].trim();
+          author = parts[1].trim();
+        }
+      } else {
+        bookName = linkText;
+      }
 
       preferbooks.add(Book(
           url: url,
           bid: bid,
-          cover: cover,
+          cover: "", // wenkuchina排行榜没有封面图
           bookName: bookName,
           author: author,
           tag: ''

@@ -1,6 +1,6 @@
 class ApiString {
-  static const String biliNovelHomeUrl = "https://www.bilinovel.com";
-  static const String bookIdRegExp = r'(?<=/novel/)\d+';
+  static const String wenKuChinaHomeUrl = "https://www.wenkuchina.com";
+  static const String bookIdRegExp = r'(?<=/lightnovel/)\d+';
 
   static String getBookActivityCover(String? style) {
     if (style == null || style.isEmpty) return "";

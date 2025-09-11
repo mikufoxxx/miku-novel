@@ -19,23 +19,22 @@ class MyBookActivities extends StatelessWidget {
           child: Swiper(
             itemCount: activities.length,
             autoplay: true,
-            itemBuilder: (context, index){
+            itemBuilder: (context, index) {
               return Stack(
                 children: [
                   Container(
                     height: 150.h,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12.r),
-                        image: DecorationImage(image:
-                        CachedNetworkImageProvider(
-                          activities[index].cover ?? "",
-                          headers: const {
-                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
-                          },
-                        ),
-                            fit: BoxFit.cover
-                        )
-                    ),
+                        image: DecorationImage(
+                            image: CachedNetworkImageProvider(
+                              activities[index].cover ?? "",
+                              headers: const {
+                                "User-Agent":
+                                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
+                              },
+                            ),
+                            fit: BoxFit.cover)),
                   ),
 
                   //背景
@@ -44,8 +43,7 @@ class MyBookActivities extends StatelessWidget {
                     height: 150.h,
                     decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12.r)
-                    ),
+                        borderRadius: BorderRadius.circular(12.r)),
                   ),
 
                   //文字
@@ -77,9 +75,7 @@ class MyBookActivities extends StatelessWidget {
                     activeColor: Colors.white,
                     size: 8.0,
                     activeSize: 10.0,
-                    space: 2.0
-                )
-            ),
+                    space: 2.0)),
           ),
         )
       ],
