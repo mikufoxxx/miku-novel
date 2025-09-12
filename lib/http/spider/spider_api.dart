@@ -23,8 +23,8 @@ class SpiderApi {
       String htmlStr = await DioInstance.instance().getString(path: bookUrl);
       Document doc = parse(htmlStr);
       
-      // 获取作者信息，位于.book-author .author-name中
-      Element? authorEl = doc.querySelector('.book-author .author-name');
+      // 获取作者信息，位于.au-name a中
+      Element? authorEl = doc.querySelector('.au-name a');
       if (authorEl != null) {
         return authorEl.text.trim();
       }
@@ -274,9 +274,6 @@ class SpiderApi {
             cover = "https://www.wenkuchina.com/files/article/image/$firstDir/$bid/${bid}s.jpg";
           }
         }
-        // 获取作者信息
-        String author = await getBookAuthor(url);
-        
         // 使用文库名称作为tag
         String tag = libraryName.isNotEmpty ? libraryName : libraryTag;
 
@@ -285,8 +282,10 @@ class SpiderApi {
             bid: bid,
             cover: cover,
             bookName: bookName,
-            author: author,
-            tag: tag
+            author: "", // 作者信息将通过懒加载获取
+            tag: tag,
+            isAuthorLoading: false,
+            isAuthorLoaded: false
         ));
       }
       
