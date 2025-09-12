@@ -153,7 +153,8 @@ class MyBookActivities extends StatelessWidget {
                                 "Sec-Ch-Ua-Platform": '"Windows"'
                               },
                             ),
-                            fit: BoxFit.cover,
+                            fit: BoxFit.fitWidth,
+                            alignment: Alignment.topCenter,
                           ),
                         ),
                       ),
@@ -164,7 +165,7 @@ class MyBookActivities extends StatelessWidget {
                         left: 0,
                         right: 0,
                         child: Container(
-                          height: 80.h,
+                          height: 120.h,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.only(
                               bottomLeft: Radius.circular(12.r),
@@ -295,7 +296,8 @@ class MyBookActivities extends StatelessWidget {
                                   "Sec-Ch-Ua-Platform": '"Windows"'
                                 },
                               ),
-                              fit: BoxFit.cover)),
+                              fit: BoxFit.fitWidth,
+                              alignment: Alignment.topCenter)),
                     ),
 
                     // 渐变遮罩
@@ -304,7 +306,7 @@ class MyBookActivities extends StatelessWidget {
                       left: 0,
                       right: 0,
                       child: Container(
-                        height: 80.h,
+                        height: 120.h,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(12.r),

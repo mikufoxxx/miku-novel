@@ -145,7 +145,8 @@ class SpiderApi {
 
     ///活动数据
     if (activitiesCallback != null) {
-      activitiesCallback.call(parseBookActivities(doc));
+      List<Activity> activities = await parseBookActivities(doc);
+      activitiesCallback.call(activities);
     }
 
     ///书籍内容-新书
@@ -176,7 +177,7 @@ class SpiderApi {
     }
   }
 
-  List<Activity> parseBookActivities(Document doc) {
+  Future<List<Activity>> parseBookActivities(Document doc) async {
     List<Activity> activities = [];
 
     // 获取轮播图图片信息
@@ -213,11 +214,32 @@ class SpiderApi {
         author = authorElement.text.trim();
       }
       
-      // 获取类型信息（参考其他板块的实现）
+      // 从详情页获取标签信息
       String tag = '轻小说';
-      Element? cateElement = infoElement.querySelector('.cate a');
-      if (cateElement != null) {
-        tag = cateElement.text.trim();
+      if (url.isNotEmpty) {
+        try {
+           String detailUrl = url.startsWith('http') ? url : 'https://www.wenkuchina.com$url';
+           String detailHtml = await DioInstance.instance().getString(path: detailUrl);
+           Document detailDoc = parse(detailHtml);
+          
+          // 从详情页的.book-label span中获取标签
+           Element? labelSpan = detailDoc.querySelector('.book-label span');
+           if (labelSpan != null) {
+             List<Element> tagElements = labelSpan.querySelectorAll('a');
+             if (tagElements.isNotEmpty) {
+               // 获取所有标签并用逗号分隔
+               List<String> tags = tagElements.map((e) => e.text.trim()).toList();
+               tag = tags.join('、');
+             }
+           }
+        } catch (e) {
+          print('获取详情页标签失败: $e');
+          // 如果获取详情页失败，尝试从当前页面获取类型信息
+          Element? cateElement = infoElement.querySelector('.cate a');
+          if (cateElement != null) {
+            tag = cateElement.text.trim();
+          }
+        }
       }
       
       if (url.isNotEmpty) {
