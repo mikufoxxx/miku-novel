@@ -93,14 +93,6 @@ class MyLibrarySections extends StatelessWidget {
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        const Spacer(),
-                        Text(
-                          '${section.books.length}本',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                          ),
-                        ),
                       ],
                     ),
                     15.verticalSpace,

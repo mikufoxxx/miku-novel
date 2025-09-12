@@ -130,26 +130,13 @@ class _MyBookItemState extends State<MyBookItem> {
 
   Widget _buildAuthorText() {
     if (_currentBook.isAuthorLoading) {
-      return Row(
-        children: [
-          SizedBox(
-            width: 10.w,
-            height: 10.h,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              color: Theme.of(context).colorScheme.inversePrimary,
-            ),
-          ),
-          SizedBox(width: 5.w),
-          Text(
-            '加载中...',
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.inversePrimary,
-            ),
-          ),
-        ],
+      return Text(
+        '加载中...',
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w500,
+          color: Theme.of(context).colorScheme.inversePrimary,
+        ),
       );
     }
 
@@ -198,9 +185,6 @@ class _MyBookItemState extends State<MyBookItem> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12.r),
                             color: Colors.grey[300],
-                          ),
-                          child: const Center(
-                            child: CircularProgressIndicator(),
                           ),
                         ),
                         errorWidget: (context, url, error) =>

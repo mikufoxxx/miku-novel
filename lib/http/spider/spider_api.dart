@@ -177,15 +177,60 @@ class SpiderApi {
   }
 
   List<Activity> parseBookActivities(Document doc) {
-    List<Element> aEls = doc.querySelectorAll("#index_tpic_big a");
     List<Activity> activities = [];
-    for (Element a in aEls) {
-      String? url = a.attributes['href']?.trim() ?? "";
-      String? cover = a.querySelector('img')?.attributes['src']?.trim() ?? "";
-      String? alt = a.querySelector('img')?.attributes['alt']?.trim() ?? "";
 
-      activities.add(Activity(url: url, cover: cover, alt: alt));
+    // 获取轮播图图片信息
+    List<Element> imgElements = doc.querySelectorAll('#index_tpic_big a');
+    // 获取轮播图文本信息
+    List<Element> infoElements = doc.querySelectorAll('#index_tpic_binfo .index_tpic_info');
+    
+    // 确保图片和信息数量匹配
+    int minLength = imgElements.length < infoElements.length ? imgElements.length : infoElements.length;
+    
+    for (int i = 0; i < minLength; i++) {
+      Element imgElement = imgElements[i];
+      Element infoElement = infoElements[i];
+      
+      // 从图片元素获取URL和封面
+      String url = imgElement.attributes['href']?.trim() ?? '';
+      Element? imgEl = imgElement.querySelector('img');
+      String cover = imgEl?.attributes['src']?.trim() ?? '';
+      String alt = imgEl?.attributes['alt']?.trim() ?? '';
+      
+      // 处理相对路径的图片URL
+      if (cover.isNotEmpty && !cover.startsWith('http')) {
+        if (cover.startsWith('/')) {
+          cover = 'https://www.wenkuchina.com\$cover';
+        } else {
+          cover = 'https://www.wenkuchina.com/\$cover';
+        }
+      }
+      
+      // 从信息元素获取作者和标签
+      String author = '未知作者';
+      Element? authorElement = infoElement.querySelector('.author a');
+      if (authorElement != null) {
+        author = authorElement.text.trim();
+      }
+      
+      // 获取类型信息（参考其他板块的实现）
+      String tag = '轻小说';
+      Element? cateElement = infoElement.querySelector('.cate a');
+      if (cateElement != null) {
+        tag = cateElement.text.trim();
+      }
+      
+      if (url.isNotEmpty) {
+        activities.add(Activity(
+          url: url.startsWith('http') ? url : 'https://www.wenkuchina.com\$url',
+          cover: cover,
+          alt: alt,
+          author: author,
+          tag: tag,
+        ));
+      }
     }
+    
     return activities;
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mikuinfo/model/activity.dart';
 import 'package:mikuinfo/model/book.dart';
 import 'package:mikuinfo/model/library_section.dart';
 import 'package:mikuinfo/pages/components/my_book_title.dart';
@@ -73,21 +74,13 @@ class _HomePageState extends State<Homepage> {
                   30.verticalSpace,
 
                   //轮播图
-                  const MyBookActivities(),
-
-                  30.verticalSpace,
-
-                  //本期推荐
-                  Selector<HomeViewModel, List<Book>?>(
-                      builder: (context, preferbooks, child) {
-                        return MyBookTitle(
-                          name: '完本推荐',
-                          books: preferbooks,
-                          width: 120.w,
-                          height: 160.h,
+                  Selector<HomeViewModel, List<Activity>?>(
+                      builder: (context, activities, child) {
+                        return MyBookActivities(
+                          activities: activities,
                         );
                       },
-                      selector: (_, viewModel) => viewModel.preferbooks),
+                      selector: (_, viewModel) => viewModel.activities),
 
                   30.verticalSpace,
 
