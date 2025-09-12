@@ -81,7 +81,7 @@ class _BookstoreState extends State<BookstorePage> {
                         return const MyBookSkeleton();
                       }
                       return MyBookTitle(
-                        name: '新书抢先',
+                        name: '新书精选',
                         books: books,
                         width: 120.w,
                         height: 160.h,
