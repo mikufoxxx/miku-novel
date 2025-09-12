@@ -24,6 +24,7 @@ class _MyBookItemState extends State<MyBookItem> {
     super.initState();
     _currentBook = widget.book.copyWith();
     _loadAuthorIfNeeded();
+    _loadTagsIfNeeded();
   }
 
   @override
@@ -32,14 +33,15 @@ class _MyBookItemState extends State<MyBookItem> {
     if (oldWidget.book.url != widget.book.url) {
       _currentBook = widget.book.copyWith();
       _loadAuthorIfNeeded();
+      _loadTagsIfNeeded();
     }
   }
 
   void _loadAuthorIfNeeded() {
-    if ((_currentBook.author == null || _currentBook.author!.isEmpty) && 
-        !_currentBook.isAuthorLoaded && 
+    if ((_currentBook.author == null || _currentBook.author!.isEmpty) &&
+        !_currentBook.isAuthorLoaded &&
         !_isLoadingAuthor &&
-        _currentBook.url != null && 
+        _currentBook.url != null &&
         _currentBook.url!.isNotEmpty) {
       _loadAuthorInfo();
     }
@@ -47,14 +49,15 @@ class _MyBookItemState extends State<MyBookItem> {
 
   Future<void> _loadAuthorInfo() async {
     if (_isLoadingAuthor) return;
-    
+
     setState(() {
       _isLoadingAuthor = true;
       _currentBook = _currentBook.copyWith(isAuthorLoading: true);
     });
 
     try {
-      final author = await SpiderApi.instance().getBookAuthor(_currentBook.url!);
+      final author =
+          await SpiderApi.instance().getBookAuthor(_currentBook.url!);
       if (mounted) {
         setState(() {
           _currentBook = _currentBook.copyWith(
@@ -74,6 +77,52 @@ class _MyBookItemState extends State<MyBookItem> {
             isAuthorLoaded: true,
           );
           _isLoadingAuthor = false;
+        });
+      }
+    }
+  }
+
+  void _loadTagsIfNeeded() {
+    if (!_currentBook.isTagsLoaded &&
+        !_currentBook.isTagsLoading &&
+        _currentBook.url != null &&
+        _currentBook.url!.isNotEmpty) {
+      _loadTagsInfo();
+    }
+  }
+
+  Future<void> _loadTagsInfo() async {
+    if (_currentBook.isTagsLoading) return;
+
+    setState(() {
+      _currentBook = _currentBook.copyWith(isTagsLoading: true);
+    });
+
+    try {
+      final tags = await SpiderApi.instance().getBookTagsList(_currentBook.url!);
+      if (mounted && tags.isNotEmpty) {
+        setState(() {
+          _currentBook = _currentBook.copyWith(
+            tags: tags,
+            isTagsLoading: false,
+            isTagsLoaded: true,
+          );
+        });
+      } else if (mounted) {
+        setState(() {
+          _currentBook = _currentBook.copyWith(
+            isTagsLoading: false,
+            isTagsLoaded: true,
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _currentBook = _currentBook.copyWith(
+            isTagsLoading: false,
+            isTagsLoaded: true,
+          );
         });
       }
     }
@@ -103,7 +152,7 @@ class _MyBookItemState extends State<MyBookItem> {
         ],
       );
     }
-    
+
     return Text(
       maxLines: 1,
       _currentBook.author ?? '未知作者',
@@ -135,10 +184,12 @@ class _MyBookItemState extends State<MyBookItem> {
                     : CachedNetworkImage(
                         imageUrl: _currentBook.cover!,
                         httpHeaders: {
-                          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
+                          "User-Agent":
+                              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
                           "Referer": "https://www.wenkuchina.com/",
                           "Cache-Control": "max-age=2592000",
-                          "Sec-Ch-Ua": '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"',
+                          "Sec-Ch-Ua":
+                              '"Chromium";v="140", "Not=A?Brand";v="24", "Microsoft Edge";v="140"',
                           "Sec-Ch-Ua-Mobile": "?0",
                           "Sec-Ch-Ua-Platform": '"Windows"'
                         },
@@ -152,33 +203,43 @@ class _MyBookItemState extends State<MyBookItem> {
                             child: CircularProgressIndicator(),
                           ),
                         ),
-                        errorWidget: (context, url, error) => _buildStaticCover(),
+                        errorWidget: (context, url, error) =>
+                            _buildStaticCover(),
                       ),
               ),
 
-              _currentBook.tag == ''
-                  ? const SizedBox()
-                  : Positioned(
+              // 只有当标签已加载且不为空时才显示横幅
+              (_currentBook.tags != null && _currentBook.tags!.isNotEmpty && !_currentBook.isTagsLoading)
+                  ? Positioned(
                       bottom: widget.height == null ? 20 : widget.height! / 20,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w),
-                        width: 120.w,
-                        height: 25.h,
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        width: (widget.width ?? 120.w) * 0.75, // 横幅宽度为封面的3/4
                         decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.9),
                             borderRadius: BorderRadius.only(
                               topRight: Radius.circular(12.r),
                               bottomRight: Radius.circular(12.r),
                             )),
-                        child: Center(
-                          child: Text(
-                            maxLines: 1,
-                            _currentBook.tag ?? '',
-                            style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary),
-                          ),
+                        child: Wrap(
+                          spacing: 4.w, // 标签之间的水平间距
+                          runSpacing: 2.h, // 行之间的垂直间距
+                          children: _currentBook.tags!
+                              .take(3) // 最多显示3个标签
+                              .map((tag) => Text(
+                                    tag,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      fontSize: 9.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ))
+                              .toList(),
                         ),
                       ))
+                  : const SizedBox() // 标签加载中或为空时不显示任何内容
             ],
           ),
 
@@ -207,7 +268,7 @@ class _MyBookItemState extends State<MyBookItem> {
     // 使用默认占位符，不再依赖静态数据
     return _buildErrorPlaceholder();
   }
-  
+
   Widget _buildErrorPlaceholder() {
     return Container(
       decoration: BoxDecoration(
