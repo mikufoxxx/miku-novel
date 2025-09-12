@@ -3,12 +3,117 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../model/book.dart';
+import '../../http/spider/spider_api.dart';
 
-class MyBookItem extends StatelessWidget {
+class MyBookItem extends StatefulWidget {
   final Book book;
   final double? height;
   final double? width;
   const MyBookItem({super.key, required this.book, this.height, this.width});
+
+  @override
+  State<MyBookItem> createState() => _MyBookItemState();
+}
+
+class _MyBookItemState extends State<MyBookItem> {
+  late Book _currentBook;
+  bool _isLoadingAuthor = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentBook = widget.book.copyWith();
+    _loadAuthorIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(MyBookItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.book.url != widget.book.url) {
+      _currentBook = widget.book.copyWith();
+      _loadAuthorIfNeeded();
+    }
+  }
+
+  void _loadAuthorIfNeeded() {
+    if ((_currentBook.author == null || _currentBook.author!.isEmpty) && 
+        !_currentBook.isAuthorLoaded && 
+        !_isLoadingAuthor &&
+        _currentBook.url != null && 
+        _currentBook.url!.isNotEmpty) {
+      _loadAuthorInfo();
+    }
+  }
+
+  Future<void> _loadAuthorInfo() async {
+    if (_isLoadingAuthor) return;
+    
+    setState(() {
+      _isLoadingAuthor = true;
+      _currentBook = _currentBook.copyWith(isAuthorLoading: true);
+    });
+
+    try {
+      final author = await SpiderApi.instance().getBookAuthor(_currentBook.url!);
+      if (mounted) {
+        setState(() {
+          _currentBook = _currentBook.copyWith(
+            author: author.isNotEmpty ? author : '未知作者',
+            isAuthorLoading: false,
+            isAuthorLoaded: true,
+          );
+          _isLoadingAuthor = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _currentBook = _currentBook.copyWith(
+            author: '未知作者',
+            isAuthorLoading: false,
+            isAuthorLoaded: true,
+          );
+          _isLoadingAuthor = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildAuthorText() {
+    if (_currentBook.isAuthorLoading) {
+      return Row(
+        children: [
+          SizedBox(
+            width: 10.w,
+            height: 10.h,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: Theme.of(context).colorScheme.inversePrimary,
+            ),
+          ),
+          SizedBox(width: 5.w),
+          Text(
+            '加载中...',
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.inversePrimary,
+            ),
+          ),
+        ],
+      );
+    }
+    
+    return Text(
+      maxLines: 1,
+      _currentBook.author ?? '未知作者',
+      style: TextStyle(
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w500,
+        color: Theme.of(context).colorScheme.inversePrimary,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,15 +125,15 @@ class MyBookItem extends StatelessWidget {
             children: [
               //封面
               Container(
-                width: width,
-                height: height,
+                width: widget.width,
+                height: widget.height,
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12.r),
                     color: Colors.grey[200]),
-                child: book.cover == null || book.cover!.isEmpty
+                child: _currentBook.cover == null || _currentBook.cover!.isEmpty
                     ? _buildStaticCover()
                     : CachedNetworkImage(
-                        imageUrl: book.cover!,
+                        imageUrl: _currentBook.cover!,
                         httpHeaders: {
                           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
                           "Referer": "https://www.wenkuchina.com/",
@@ -51,10 +156,10 @@ class MyBookItem extends StatelessWidget {
                       ),
               ),
 
-              book.tag == ''
+              _currentBook.tag == ''
                   ? const SizedBox()
                   : Positioned(
-                      bottom: height == null ? 20 : height! / 20,
+                      bottom: widget.height == null ? 20 : widget.height! / 20,
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 10.w),
                         width: 120.w,
@@ -68,7 +173,7 @@ class MyBookItem extends StatelessWidget {
                         child: Center(
                           child: Text(
                             maxLines: 1,
-                            book.tag ?? '',
+                            _currentBook.tag ?? '',
                             style: TextStyle(
                                 color: Theme.of(context).colorScheme.onPrimary),
                           ),
@@ -83,7 +188,7 @@ class MyBookItem extends StatelessWidget {
             width: 120.w,
             child: Text(
               maxLines: 1,
-              book.bookName ?? '',
+              _currentBook.bookName ?? '',
               style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
             ),
           ),
@@ -91,14 +196,7 @@ class MyBookItem extends StatelessWidget {
           Container(
             padding: EdgeInsets.only(top: 5.h),
             width: 120.w,
-            child: Text(
-              maxLines: 1,
-              book.author ?? '',
-              style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.inversePrimary),
-            ),
+            child: _buildAuthorText(),
           )
         ],
       ),

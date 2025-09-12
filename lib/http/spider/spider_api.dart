@@ -17,6 +17,24 @@ class SpiderApi {
     return _instance ??= SpiderApi._();
   }
 
+  /// 从书籍详情页获取作者信息
+  Future<String> getBookAuthor(String bookUrl) async {
+    try {
+      String htmlStr = await DioInstance.instance().getString(path: bookUrl);
+      Document doc = parse(htmlStr);
+      
+      // 获取作者信息，位于.book-author .author-name中
+      Element? authorEl = doc.querySelector('.book-author .author-name');
+      if (authorEl != null) {
+        return authorEl.text.trim();
+      }
+      
+      return "";
+    } catch (e) {
+      return "";
+    }
+  }
+
   /// 从书籍详情页获取标签信息
   Future<String> getBookTags(String bookUrl) async {
     try {
@@ -94,8 +112,9 @@ class SpiderApi {
     }
 
     ///热门小说
-    if (hotBooksCallback != null){
-      hotBooksCallback.call(parseHotBooks(doc));
+    if (hotBooksCallback != null) {
+      List<LibrarySection> hotBooks = await parseHotBooks(doc);
+      hotBooksCallback.call(hotBooks);
     }
 
     ///经典完本
@@ -213,7 +232,7 @@ class SpiderApi {
   }
 
   /// 解析热门小说（按文库分级）
-  List<LibrarySection> parseHotBooks(Document doc) {
+  Future<List<LibrarySection>> parseHotBooks(Document doc) async {
     List<Element> cateEls = doc.querySelectorAll('.cate-blank .cate-cell');
     List<LibrarySection> librarySections = [];
 
@@ -255,7 +274,8 @@ class SpiderApi {
             cover = "https://www.wenkuchina.com/files/article/image/$firstDir/$bid/${bid}s.jpg";
           }
         }
-        String author = "";
+        // 获取作者信息
+        String author = await getBookAuthor(url);
         
         // 使用文库名称作为tag
         String tag = libraryName.isNotEmpty ? libraryName : libraryTag;
