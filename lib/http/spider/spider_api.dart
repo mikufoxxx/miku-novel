@@ -443,84 +443,120 @@ class SpiderApi {
 
   /// 解析经典完本（完本推荐）
   List<Book> parseCompletedBooks(Document doc) {
-    List<Element> completedEls = doc.querySelectorAll('.livelybox a');
+    List<Element> completedEls = doc.querySelectorAll('.mind-showbook .mind-book');
     List<Book> completedBooks = [];
 
-    for (Element linkEl in completedEls) {
+    for (Element bookEl in completedEls) {
+      // 获取书籍链接和书名
+      Element? linkEl = bookEl.querySelector('.bookname a');
+      if (linkEl == null) continue;
+      
       String? url = linkEl.attributes['href']?.trim() ?? "";
       String bid = ApiString.getId(url, ApiString.bookIdRegExp);
-
-      // 获取书名
       String bookName = linkEl.text.trim();
 
-      // 获取作者 - 从父级元素查找
-      Element? parentEl = linkEl.parent;
-      String author = "";
-      if (parentEl != null) {
-        List<Element> textNodes = parentEl.querySelectorAll('*');
-        for (Element node in textNodes) {
-          String text = node.text.trim();
-          if (text.isNotEmpty && text != bookName && !text.contains('完本')) {
-            author = text;
-            break;
+      // 获取封面图片
+      Element? imgEl = bookEl.querySelector('.imgbox img');
+      String cover = "";
+      if (imgEl != null) {
+        cover = imgEl.attributes['src']?.trim() ?? imgEl.attributes['data-original']?.trim() ?? "";
+        // 处理相对路径
+        if (cover.isNotEmpty && !cover.startsWith('http')) {
+          if (cover.startsWith('/')) {
+            cover = 'https://www.wenkuchina.com$cover';
+          } else {
+            cover = 'https://www.wenkuchina.com/$cover';
           }
         }
       }
 
+      // 获取作者
+      Element? authorEl = bookEl.querySelector('.author a');
+      String author = authorEl?.text.trim() ?? "";
+
+      // 获取分类
+      Element? cateEl = bookEl.querySelector('.cate a');
+      String category = cateEl?.text.trim() ?? "完本";
+
       completedBooks.add(Book(
           url: url,
           bid: bid,
-          cover: "", // 完本推荐没有封面图
+          cover: cover,
           bookName: bookName,
           author: author,
-          tag: "完本",
-          tags: ["完本"])); // 完本标签
+          tag: category,
+          tags: [category]));
     }
     return completedBooks;
   }
 
   /// 解析最近更新
   List<Book> parseRecentUpdates(Document doc) {
-    List<Element> updateEls = doc.querySelectorAll('.main_con li');
-    List<Book> recentUpdates = [];
+    List<Element> recentEls = doc.querySelectorAll('.new_chapter .main_con li');
+    List<Book> recentBooks = [];
 
-    for (Element item in updateEls) {
-      Element? linkEl = item.querySelector('a');
+    for (Element bookEl in recentEls) {
+      // 获取书名和链接
+      Element? linkEl = bookEl.querySelector('.bookname a');
       if (linkEl == null) continue;
-
+      
       String? url = linkEl.attributes['href']?.trim() ?? "";
       String bid = ApiString.getId(url, ApiString.bookIdRegExp);
-
-      // 获取书名
       String bookName = linkEl.text.trim();
 
-      // 获取作者和其他信息
-      List<Element> spans = item.querySelectorAll('span');
-      String author = "";
-      String library = "";
-      String updateTime = "";
+      // 获取文库信息
+      Element? kindEl = bookEl.querySelector('.kind a');
+      String kind = kindEl?.text.trim() ?? "";
+      // 移除方括号
+      if (kind.startsWith('[') && kind.endsWith(']')) {
+        kind = kind.substring(1, kind.length - 1);
+      }
 
-      if (spans.length >= 3) {
-        library = spans[0].text.trim(); // 文库
-        author = spans[2].text.trim(); // 作者
-        if (spans.length >= 5) {
-          updateTime = spans[4].text.trim(); // 更新时间
+      // 获取作者
+      Element? authorEl = bookEl.querySelector('.author a');
+      String author = authorEl?.text.trim() ?? "";
+
+      // 获取最新章节
+      Element? chapEl = bookEl.querySelector('.chap a');
+      String latestChapter = chapEl?.text.trim() ?? "";
+
+      // 获取字数
+      Element? countEl = bookEl.querySelector('.count');
+      String wordCount = countEl?.text.trim() ?? "";
+
+      // 获取更新时间
+      Element? timeEl = bookEl.querySelector('.time');
+      String updateTime = timeEl?.text.trim() ?? "";
+
+      // 根据书籍ID拼接封面URL（参考热门小说的实现方式）
+      String cover = "";
+      if (bid.isNotEmpty) {
+        // 根据示例HTML分析，封面URL格式规律：
+        // ID 1-999: 目录为 0
+        // ID 1000-1999: 目录为 1
+        // ID 2000-2999: 目录为 2
+        // ID 3000-3999: 目录为 3
+        // 即：目录 = ID的千位数字
+        int bidNum = int.tryParse(bid) ?? 0;
+        if (bidNum > 0) {
+          String firstDir = (bidNum ~/ 1000).toString();
+          cover =
+              "https://www.wenkuchina.com/files/article/image/$firstDir/$bid/${bid}s.jpg";
         }
       }
 
-      String tag = library.isNotEmpty && updateTime.isNotEmpty
-          ? "$library · $updateTime"
-          : (library.isNotEmpty ? library : updateTime);
-
-      recentUpdates.add(Book(
+      recentBooks.add(Book(
           url: url,
           bid: bid,
-          cover: "", // 最近更新列表没有封面图
+          cover: cover,
           bookName: bookName,
           author: author,
-          tag: tag,
-          tags: library.isNotEmpty ? [library] : [])); // 使用文库作为标签
+          tag: kind,
+          tags: [kind],
+          latestChapter: latestChapter,
+          wordCount: wordCount,
+          updateTime: updateTime));
     }
-    return recentUpdates;
+    return recentBooks;
   }
 }

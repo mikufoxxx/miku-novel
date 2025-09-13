@@ -7,6 +7,9 @@ class Book {
     this.author,
     this.tag,
     this.tags,
+    this.latestChapter,
+    this.wordCount,
+    this.updateTime,
     this.isAuthorLoading = false,
     this.isAuthorLoaded = false,
     this.isTagsLoading = false,
@@ -20,6 +23,9 @@ class Book {
   String? author;
   String? tag;
   List<String>? tags;
+  String? latestChapter;
+  String? wordCount;
+  String? updateTime;
   
   // 作者信息加载状态
   bool isAuthorLoading;
@@ -38,6 +44,9 @@ class Book {
     String? author,
     String? tag,
     List<String>? tags,
+    String? latestChapter,
+    String? wordCount,
+    String? updateTime,
     bool? isAuthorLoading,
     bool? isAuthorLoaded,
     bool? isTagsLoading,
@@ -51,6 +60,9 @@ class Book {
       author: author ?? this.author,
       tag: tag ?? this.tag,
       tags: tags ?? this.tags,
+      latestChapter: latestChapter ?? this.latestChapter,
+      wordCount: wordCount ?? this.wordCount,
+      updateTime: updateTime ?? this.updateTime,
       isAuthorLoading: isAuthorLoading ?? this.isAuthorLoading,
       isAuthorLoaded: isAuthorLoaded ?? this.isAuthorLoaded,
       isTagsLoading: isTagsLoading ?? this.isTagsLoading,
