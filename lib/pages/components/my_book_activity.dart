@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_swiper_view/flutter_swiper_view.dart';
 import 'package:mikuinfo/model/activity.dart';
 import 'package:mikuinfo/model/light_novel.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MyBookActivities extends StatelessWidget {
@@ -21,85 +22,18 @@ class MyBookActivities extends StatelessWidget {
   }
 
   // 构建骨架屏加载器
-  Widget _buildSkeletonLoader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 200.h,
-          width: double.infinity,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12.r),
-              color: Colors.grey[300],
-            ),
-            child: Stack(
-              children: [
-                // 骨架屏背景
-                Container(
-                  height: 200.h,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12.r),
-                    color: Colors.grey[300],
-                  ),
-                ),
-                // 骨架屏文字区域
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(15.r),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(12.r),
-                        bottomRight: Radius.circular(12.r),
-                      ),
-                      color: Colors.white.withOpacity(0.95),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          height: 16.h,
-                          width: 150.w,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(4.r),
-                          ),
-                        ),
-                        4.verticalSpace,
-                        Row(
-                          children: [
-                            Container(
-                              height: 12.h,
-                              width: 80.w,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                            ),
-                            10.horizontalSpace,
-                            Container(
-                              height: 12.h,
-                              width: 40.w,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+  Widget _buildSkeletonLoader(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Theme.of(context).colorScheme.inverseSurface,
+      highlightColor: Theme.of(context).colorScheme.onInverseSurface,
+      child: Container(
+        width: double.infinity,
+        height: 200.h,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          color: Theme.of(context).colorScheme.inverseSurface,
         ),
-      ],
+      ),
     );
   }
 
@@ -112,7 +46,7 @@ class MyBookActivities extends StatelessWidget {
 
     // 如果数据正在加载，显示骨架屏
     if (visibleNovels.isEmpty && (activities == null || activities!.isEmpty)) {
-      return _buildSkeletonLoader();
+      return _buildSkeletonLoader(context);
     }
 
     return Column(
