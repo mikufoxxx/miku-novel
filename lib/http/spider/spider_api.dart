@@ -198,7 +198,7 @@ class SpiderApi {
       String cover = imgEl?.attributes['src']?.trim() ?? '';
       String alt = imgEl?.attributes['alt']?.trim() ?? '';
       
-      // 处理相对路径的图片URL
+      // 处理相对路径的图片URL（只有当URL不是完整URL时才添加域名）
       if (cover.isNotEmpty && !cover.startsWith('http')) {
         if (cover.startsWith('/')) {
           cover = 'https://www.wenkuchina.com\$cover';
@@ -206,6 +206,7 @@ class SpiderApi {
           cover = 'https://www.wenkuchina.com/\$cover';
         }
       }
+      // 如果已经是完整URL，直接使用
       
       // 从信息元素获取作者和标签
       String author = '未知作者';
@@ -443,40 +444,35 @@ class SpiderApi {
 
   /// 解析经典完本（完本推荐）
   List<Book> parseCompletedBooks(Document doc) {
-    List<Element> completedEls = doc.querySelectorAll('.mind-showbook .mind-book');
     List<Book> completedBooks = [];
 
-    for (Element bookEl in completedEls) {
-      // 获取书籍链接和书名
-      Element? linkEl = bookEl.querySelector('.bookname a');
-      if (linkEl == null) continue;
-      
-      String? url = linkEl.attributes['href']?.trim() ?? "";
+    // 解析完本推荐板块的.mind-showbook .mind-book部分
+    List<Element> bookElements = doc.querySelectorAll('.top-two-blank-mid .mind-showbook .mind-book');
+    for (Element bookEl in bookElements) {
+      // 获取URL
+      Element? linkEl = bookEl.querySelector('.imgbox a') ?? bookEl.querySelector('.bookname a');
+      String url = linkEl?.attributes['href']?.trim() ?? "";
       String bid = ApiString.getId(url, ApiString.bookIdRegExp);
-      String bookName = linkEl.text.trim();
-
-      // 获取封面图片
+      
+      // 获取封面 - 优先使用data-original属性
       Element? imgEl = bookEl.querySelector('.imgbox img');
       String cover = "";
       if (imgEl != null) {
-        cover = imgEl.attributes['src']?.trim() ?? imgEl.attributes['data-original']?.trim() ?? "";
-        // 处理相对路径
-        if (cover.isNotEmpty && !cover.startsWith('http')) {
-          if (cover.startsWith('/')) {
-            cover = 'https://www.wenkuchina.com$cover';
-          } else {
-            cover = 'https://www.wenkuchina.com/$cover';
-          }
-        }
+        // 优先使用data-original属性，因为src通常是占位图片
+        cover = imgEl.attributes['data-original']?.trim() ?? imgEl.attributes['src']?.trim() ?? "";
       }
 
+      // 获取书名
+      Element? nameEl = bookEl.querySelector('.bookname a');
+      String bookName = nameEl?.text.trim() ?? "";
+      
       // 获取作者
       Element? authorEl = bookEl.querySelector('.author a');
       String author = authorEl?.text.trim() ?? "";
-
+      
       // 获取分类
       Element? cateEl = bookEl.querySelector('.cate a');
-      String category = cateEl?.text.trim() ?? "完本";
+      String category = cateEl?.text.trim() ?? "";
 
       completedBooks.add(Book(
           url: url,
@@ -484,9 +480,54 @@ class SpiderApi {
           cover: cover,
           bookName: bookName,
           author: author,
-          tag: category,
-          tags: [category]));
+          tag: "完本推荐",
+          tags: ["完本推荐", category].where((tag) => tag.isNotEmpty).toList()));
     }
+
+    // 解析.link clearfix部分
+    List<Element> linkEls = doc.querySelectorAll('.top-two-blank-mid .link p');
+    for (Element pEl in linkEls) {
+      // 获取分类链接
+      Element? classifyEl = pEl.querySelector('.bookclass.classify');
+      String category = classifyEl?.text.trim() ?? "";
+      // 移除方括号
+      if (category.startsWith('[') && category.endsWith(']')) {
+        category = category.substring(1, category.length - 1);
+      }
+
+      // 获取书名和链接
+      Element? bookLinkEl = pEl.querySelector('.bookname');
+      if (bookLinkEl == null) continue;
+      
+      String? url = bookLinkEl.attributes['href']?.trim() ?? "";
+      String bid = ApiString.getId(url, ApiString.bookIdRegExp);
+      String bookName = bookLinkEl.text.trim();
+
+      // 根据书籍ID生成封面URL（参考最近更新的实现方式）
+      String cover = "";
+      if (bid.isNotEmpty) {
+        int bidNum = int.tryParse(bid) ?? 0;
+        if (bidNum > 0) {
+          String firstDir = (bidNum ~/ 1000).toString();
+          cover = "https://www.wenkuchina.com/files/article/image/$firstDir/$bid/${bid}s.jpg";
+        }
+      }
+
+      List<String> tags = ["完本推荐"];
+      if (category.isNotEmpty) {
+        tags.add(category);
+      }
+
+      completedBooks.add(Book(
+          url: url,
+          bid: bid,
+          cover: cover,
+          bookName: bookName,
+          author: "", // .link部分没有作者信息
+          tag: "完本推荐",
+          tags: tags));
+    }
+
     return completedBooks;
   }
 
